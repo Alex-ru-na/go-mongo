@@ -2,6 +2,8 @@ package routes
 
 import (
 	"go-mongodb-api/handlers"
+	"go-mongodb-api/repositories"
+	"go-mongodb-api/services"
 
 	"github.com/gorilla/mux"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -10,14 +12,23 @@ import (
 func SetupRoutes(client *mongo.Client) *mux.Router {
 	router := mux.NewRouter()
 
-	//start handlers for modules
-	handlers.InitUserHandlers(client)
+	userRepo := repositories.NewUserRepository(client)
+	userService := services.UserService{Repo: userRepo}
+	userHandlers := handlers.NewUserHandlers(&userService)
 
-	// Grouping routes by modules
+	authService := services.AuthService{Repo: userRepo}
+	authHandlers := handlers.NewAuthHandlers(&authService)
+
+	// Grouping routes users
 	users := router.PathPrefix("/users").Subrouter()
-	users.HandleFunc("", handlers.GetUsers()).Methods("GET")
-	users.HandleFunc("", handlers.CreateUser()).Methods("POST")
-	users.HandleFunc("", handlers.UpdateUser()).Methods("PATCH")
+	users.HandleFunc("", userHandlers.GetUsers()).Methods("GET")
+	users.HandleFunc("/{id}", userHandlers.GetUser()).Methods("GET")
+	users.HandleFunc("", userHandlers.CreateUser()).Methods("POST")
+	users.HandleFunc("", userHandlers.UpdateUser()).Methods("PATCH")
+
+	// Grouping routes auth
+	auth := router.PathPrefix("/auth").Subrouter()
+	auth.HandleFunc("/login", authHandlers.Login()).Methods("POST")
 
 	return router
 }
