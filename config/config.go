@@ -22,9 +22,11 @@ func LoadConfig() map[string]string {
 		}
 
 		config = map[string]string{
-			"MONGO_URI": getEnv("MONGO_URI", "mongodb://localhost:270171"),
-			"MONGO_DB":  getEnv("MONGO_DB", "testdbgo"),
-			"APP_PORT":  getEnv("APP_PORT", "8080"),
+			"MONGO_URI":    getEnv("MONGO_URI", "mongodb://localhost:270171"),
+			"MONGO_DB":     getEnv("MONGO_DB", "testdbgo"),
+			"APP_PORT":     getEnv("APP_PORT", "8080"),
+			"JWT_SECRET":   getEnv("JWT_SECRET", "test"),
+			"TOKEN_EXPIRY": getEnv("TOKEN_EXPIRY", "24h"),
 		}
 	})
 	return config
