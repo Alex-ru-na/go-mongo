@@ -1,6 +1,7 @@
 package routes
 
 import (
+	"go-mongodb-api/common/websocket"
 	"go-mongodb-api/handlers"
 	"go-mongodb-api/middlewares"
 	"go-mongodb-api/repositories"
@@ -36,6 +37,11 @@ func SetupRoutes(client *mongo.Client) *mux.Router {
 	// Grouping routes auth
 	auth := router.PathPrefix("/auth").Subrouter()
 	auth.HandleFunc("/login", authHandlers.Login()).Methods("POST")
+
+	// WebSocket route
+	manager := websocket.NewWebSocketManager()
+	socketHandler := websocket.NewWebSocketHandler(manager)
+	router.HandleFunc("/ws", socketHandler.HandleConnection)
 
 	return router
 }
