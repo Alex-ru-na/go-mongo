@@ -1,9 +1,8 @@
 package routes
 
 import (
-	"go-mongodb-api/common/websocket"
 	"go-mongodb-api/handlers"
-	"go-mongodb-api/middlewares"
+	"go-mongodb-api/pkg/websocket"
 	"go-mongodb-api/repositories"
 	"go-mongodb-api/services"
 
@@ -14,15 +13,18 @@ import (
 func SetupRoutes(client *mongo.Client) *mux.Router {
 	router := mux.NewRouter()
 
+	manager := websocket.NewWebSocketManager()
+	socketHandler := websocket.NewWebSocketHandler(manager)
+
 	userRepo := repositories.NewUserRepository(client)
-	userService := services.UserService{Repo: userRepo}
-	userHandlers := handlers.NewUserHandlers(&userService)
+	userService := services.NewUserService(userRepo, manager)
+	userHandlers := handlers.NewUserHandlers(userService)
 
 	authService := services.AuthService{Repo: userRepo}
 	authHandlers := handlers.NewAuthHandlers(&authService)
 
 	// Create the AuthMiddleware
-	authMiddleware := middlewares.NewAuthMiddleware(&authService)
+	//authMiddleware := middlewares.NewAuthMiddleware(&authService)
 
 	// Grouping routes users
 	users := router.PathPrefix("/users").Subrouter()
@@ -32,15 +34,14 @@ func SetupRoutes(client *mongo.Client) *mux.Router {
 	users.HandleFunc("", userHandlers.UpdateUser()).Methods("PATCH")
 
 	// Protect user routes with AuthMiddleware
-	users.Use(authMiddleware.Protect)
+	//users.Use(authMiddleware.Protect)
 
 	// Grouping routes auth
 	auth := router.PathPrefix("/auth").Subrouter()
 	auth.HandleFunc("/login", authHandlers.Login()).Methods("POST")
 
 	// WebSocket route
-	manager := websocket.NewWebSocketManager()
-	socketHandler := websocket.NewWebSocketHandler(manager)
+
 	router.HandleFunc("/ws", socketHandler.HandleConnection)
 
 	return router
