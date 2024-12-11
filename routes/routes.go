@@ -30,6 +30,10 @@ func SetupRoutes(client *mongo.Client) *mux.Router {
 	pokemonService := services.NewPokemonService()
 	pokemonHandlers := handlers.NewPokemonHandlers(pokemonService, redisService)
 
+	paymentRepo := repositories.NewPaymentRepository(client)
+	paymentService := services.NewPaymentService(paymentRepo)
+	paymentHandlers := handlers.NewPaymentHandlers(paymentService)
+
 	// Create the AuthMiddleware
 	authMiddleware := middlewares.NewAuthMiddleware(&authService)
 
@@ -53,6 +57,9 @@ func SetupRoutes(client *mongo.Client) *mux.Router {
 	// pokemon
 	router.HandleFunc("/pokemons", pokemonHandlers.Pokemons()).Methods("GET")
 	router.HandleFunc("/pokemons/{name}", pokemonHandlers.PokemonCache()).Methods("GET")
+
+	// payments
+	router.HandleFunc("/payments", paymentHandlers.Payment()).Methods("POST")
 
 	return router
 }
