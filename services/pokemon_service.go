@@ -3,8 +3,11 @@ package services
 import (
 	"encoding/json"
 	"fmt"
+	"go-mongodb-api/pkg/redis"
+	"log"
 	"net/http"
 	"sync"
+	"time"
 )
 
 type Pokemon struct {
@@ -75,4 +78,27 @@ func (s *PokemonService) FetchMultiplePokemons(names []string) ([]*Pokemon, erro
 	}
 
 	return results, nil
+}
+
+func (s *PokemonService) FetchPokemonWithCache(name string, redisService *redis.RedisService) (*Pokemon, error) {
+	cacheKey := fmt.Sprintf("pokemon:%s", name)
+	cachedData, err := redisService.Get(cacheKey)
+	if err == nil && cachedData != "" {
+		log.Printf("Cache hit for %s", name)
+		var cachedPokemon Pokemon
+		if err := json.Unmarshal([]byte(cachedData), &cachedPokemon); err == nil {
+			return &cachedPokemon, nil
+		}
+	}
+
+	log.Printf("Cache miss for %s", name)
+	pokemon, err := s.FetchPokemon(name)
+	if err != nil {
+		return nil, err
+	}
+
+	pokemonJSON, _ := json.Marshal(pokemon)
+	redisService.Set(cacheKey, string(pokemonJSON), 10*time.Minute)
+
+	return pokemon, nil
 }
