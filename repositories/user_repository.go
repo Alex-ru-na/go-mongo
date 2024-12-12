@@ -2,6 +2,7 @@ package repositories
 
 import (
 	"context"
+	"errors"
 	"go-mongodb-api/models"
 	"time"
 
@@ -83,7 +84,23 @@ func (r *UserRepository) Update(user models.User) (*models.User, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	update := bson.M{"$set": bson.M{"name": user.Name, "email": user.Email}}
+	updateFields := bson.M{}
+	if user.Name != "" {
+		updateFields["name"] = user.Name
+	}
+	if user.Email != "" {
+		updateFields["email"] = user.Email
+	}
+
+	if user.Status != "" {
+		updateFields["status"] = user.Status
+	}
+
+	if len(updateFields) == 0 {
+		return nil, errors.New("filed are require")
+	}
+
+	update := bson.M{"$set": updateFields}
 	filter := bson.M{"_id": user.ID}
 
 	_, err := r.Collection.UpdateOne(ctx, filter, update)

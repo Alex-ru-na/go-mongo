@@ -41,3 +41,17 @@ func (r *RedisService) Get(key string) (string, error) {
 	}
 	return val, nil
 }
+
+func (r *RedisService) Publish(ctx context.Context, channel, message string) error {
+	return r.client.Publish(ctx, channel, message).Err()
+}
+
+func (r *RedisService) Subscribe(ctx context.Context, channel string, handleMessage func(message string)) error {
+	sub := r.client.Subscribe(ctx, channel)
+
+	for msg := range sub.Channel() {
+		handleMessage(msg.Payload)
+	}
+
+	return nil
+}

@@ -16,6 +16,10 @@ func NewPaymentService(repo *repositories.PaymentRepository) *PaymentService {
 	}
 }
 
+func ValidatePayment(createdPayment models.Payment) bool {
+	return createdPayment.Amount > 0
+}
+
 func (s *PaymentService) CreatePayment(payment models.Payment) (*models.Payment, error) {
 	createdPayment, err := s.Repo.CreatePayment(payment)
 	if err != nil {
