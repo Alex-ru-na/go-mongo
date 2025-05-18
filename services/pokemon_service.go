@@ -22,6 +22,12 @@ type Pokemon struct {
 	} `json:"types"`
 }
 
+type IPokemonService interface {
+	FetchPokemon(name string) (*Pokemon, error)
+	FetchMultiplePokemons(names []string) ([]*Pokemon, error)
+	FetchPokemonWithCache(name string, redisService *redis.RedisService) (*Pokemon, error)
+}
+
 type PokemonService struct{}
 
 func NewPokemonService() *PokemonService {
